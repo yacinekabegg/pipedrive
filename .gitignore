@@ -1,10 +1,49 @@
-# ignore secrets, virtual environments and typical python compilation artifacts
-secrets.toml
-# ignore basic python artifacts
+# Secrets et credentials
 .env
-**/__pycache__/
-**/*.py[cod]
-**/*$py.class
-# ignore duckdb
+*.json
+secrets.toml
+.dlt/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# DuckDB files
 *.duckdb
-*.wal
