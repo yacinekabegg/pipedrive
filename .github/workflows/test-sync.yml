@@ -1,0 +1,32 @@
+name: Test Pipedrive Sync
+
+on:
+  workflow_dispatch: # Exécution manuelle uniquement
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install dlt[duckdb]  # Utiliser DuckDB pour les tests
+        
+    - name: Test with DuckDB
+      run: |
+        python test_duckdb.py
+        
+    - name: Test configuration
+      run: |
+        python pipedrive_main.py --mode resources

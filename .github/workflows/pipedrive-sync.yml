@@ -1,0 +1,75 @@
+name: Pipedrive to BigQuery Daily Sync
+
+on:
+  schedule:
+    # Exécute tous les jours à 6h00 UTC (8h00 heure française)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Permet d'exécuter manuellement
+  push:
+    branches: [ main, master ]
+
+jobs:
+  sync-pipedrive-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install dlt[bigquery]
+        
+    - name: Set up Google Cloud credentials
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        
+    - name: Configure gcloud
+      run: |
+        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+        gcloud auth configure-docker
+        
+    - name: Create secrets.toml
+      run: |
+        mkdir -p .dlt
+        cat > .dlt/secrets.toml << EOF
+        [sources.pipedrive]
+        pipedrive_api_key = "${{ secrets.PIPEDRIVE_API_KEY }}"
+        
+        [destination.bigquery]
+        location = "US"
+        EOF
+        
+    - name: Run Pipedrive sync
+      run: |
+        python pipedrive_main.py --mode incremental
+        
+    - name: Upload logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pipeline-logs
+        path: |
+          logs/
+          .dlt/
+        retention-days: 7
+        
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Pipeline Pipedrive vers BigQuery a échoué"
+        echo "Vérifiez les logs pour plus de détails"
+        # Ici vous pouvez ajouter une notification Slack, email, etc.
+        
+    - name: Success notification
+      if: success()
+      run: |
+        echo "✅ Pipeline Pipedrive vers BigQuery exécuté avec succès"
+        echo "Données synchronisées vers BigQuery"
